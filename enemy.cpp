@@ -1,0 +1,51 @@
+#include "Enemy.h"
+#include <QTimer>
+#include <QGraphicsScene>
+#include <QList>
+#include <stdlib.h>
+#include "Game.h"
+#include <typeinfo>
+
+extern Game * game;
+
+Enemy::Enemy(QGraphicsItem *parent): QObject(), QGraphicsPixmapItem(parent)
+{
+    int random_number = rand() % 700;
+    setPos(random_number,0);
+
+    setPixmap(QPixmap(":/images/enemy.png"));
+    //setTransformOriginPoint(50,50);
+    //setRotation(180);
+
+    QTimer * timer = new QTimer(this);
+    connect(timer,SIGNAL(timeout()),this,SLOT(move()));
+
+    timer->start(50);
+}
+
+void Enemy::move()
+{
+    QList<QGraphicsItem *> colliding_items = collidingItems();
+
+    for (int i = 0, n = colliding_items.size(); i < n; ++i)
+    {
+        if (typeid(*(colliding_items[i])) == typeid(Player))
+        {
+            game->health->decrease(2);
+
+            scene()->removeItem(this);
+            delete this;
+
+            return;
+        }
+    }
+
+    setPos(x(),y()+game->enemy_move_speed);
+    if (pos().y() > 600){
+        game->health->decrease();
+        //game->score->decrease(2);
+
+        scene()->removeItem(this);
+        delete this;
+    }
+}
